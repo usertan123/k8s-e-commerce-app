@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: easyshop-cert
+  namespace: easyshop
+spec:
+  secretName: easyshop-tls-secret   # cert-manager will create/populate this secret
+  dnsNames:
+  - easyshop.techinferno.shop
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
