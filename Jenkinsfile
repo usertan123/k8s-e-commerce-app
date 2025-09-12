@@ -21,7 +21,7 @@ pipeline {
         
         stage('Git: Code Checkout') {
             steps {
-                script{ code_checkout("https://github.com/usertan123/k8s-e-commerce-app.git","main") }
+                script{ code_checkout("https://github.com/usertan123/k8s-e-commerce-app.git","main") } 
             }
         }
 
