@@ -184,5 +184,49 @@ pipeline {
                 }
             }
         }
+        post {
+    success {
+        emailext (
+            subject: "✅ Jenkins Build #${env.BUILD_NUMBER} - SUCCESS",
+            body: """
+                <h2 style="color:green;">Build Successful 🎉</h2>
+                <p>Job: ${env.JOB_NAME}<br>
+                Build Number: ${env.BUILD_NUMBER}<br>
+                Status: <b>${currentBuild.currentResult}</b></p>
+
+                <h3>Attached Reports:</h3>
+                <ul>
+                  <li>Trivy Scan Report</li>
+                  <li>OWASP Dependency Check Report</li>
+                </ul>
+
+            """,
+            to: "tan2018carlson@gmail.com",
+            attachmentsPattern: "trivy-*.json, **/dependency-check-report.xml"
+        )
+    }
+
+    failure {
+        emailext (
+            subject: "❌ Jenkins Build #${env.BUILD_NUMBER} - FAILED",
+            body: """
+                <h2 style="color:red;">Build Failed 🚨</h2>
+                <p>Job: ${env.JOB_NAME}<br>
+                Build Number: ${env.BUILD_NUMBER}<br>
+                Status: <b>${currentBuild.currentResult}</b></p>
+
+                <h3>Attached Reports:</h3>
+                <ul>
+                  <li>Trivy Scan Report</li>
+                  <li>OWASP Dependency Check Report</li>
+                </ul>
+
+            """,
+            to: "tan2018carlson@gmail.com",
+            attachmentsPattern: "trivy-*.json, **/dependency-check-report.xml"
+                )
+            }
+        }       
+
     }
 }
