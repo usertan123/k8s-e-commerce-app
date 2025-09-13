@@ -17,7 +17,10 @@ RUN npm ci
 COPY . .
 
 # Build the Next.js application
-RUN npm run build
+RUN npm run build 
+RUN ls -l .next/standalone && \
+    ls -l .next/static && \
+    ls -l public
 
 # Stage 2: Production Stage
 FROM node:18-alpine AS runner
