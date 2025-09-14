@@ -20,7 +20,7 @@ spec:
         command: ["sh", "-c", "until nc -z easyshop-db 5432; do echo waiting for db; sleep 3; done"]
       containers:
       - name: migration
-        image: tanmaytech/easyshop-migration:22
+        image: tanmaytech/easyshop-migration:23
         command: ["sh", "-c", "npm run migrate"]
         imagePullPolicy: IfNotPresent
         envFrom:
