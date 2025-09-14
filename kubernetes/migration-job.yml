@@ -5,21 +5,27 @@ metadata:
   namespace: easyshop
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded,HookFailed
+    # argocd.argoproj.io/hook-delete-policy: HookSucceeded,HookFailed
     argocd.argoproj.io/hook-weight: "-1"
 spec:
+  backoffLimit: 3
   template:
     metadata:
         labels:
           app: db-migration
     spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.36
+        command: ["sh", "-c", "until nc -z easyshop-db 5432; do echo waiting for db; sleep 3; done"]
       containers:
       - name: migration
         image: tanmaytech/easyshop-migration:19
+        command: ["sh", "-c", "npm run migrate"]
         imagePullPolicy: IfNotPresent
         envFrom:
-            - configMapRef:
-                name: easyshop-config
-            - secretRef:
-                name: easyshop-secret
+        - configMapRef:
+            name: easyshop-config
+        - secretRef:
+            name: easyshop-secret
       restartPolicy: OnFailure
