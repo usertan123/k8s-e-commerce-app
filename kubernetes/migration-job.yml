@@ -3,14 +3,23 @@ kind: Job
 metadata:
   name: db-migration
   namespace: easyshop
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,HookFailed
+    argocd.argoproj.io/hook-weight: "-1"
 spec:
   template:
+    metadata:
+        labels:
+          app: db-migration
     spec:
       containers:
       - name: migration
         image: tanmaytech/easyshop-migration:1
-        imagePullPolicy: Always
-        env:
-        - name: MONGODB_URI
-          value: "mongodb://mongodb-service:27017/easyshop"
+        imagePullPolicy: IfNotPresent
+        envFrom:
+            - configMapRef:
+                name: easyshop-config
+            - secretRef:
+                name: easyshop-secrets
       restartPolicy: OnFailure
