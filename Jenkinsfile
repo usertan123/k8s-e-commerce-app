@@ -21,33 +21,59 @@ pipeline {
         
         stage('Git: Code Checkout') {
             steps {
-                script{ code_checkout("https://github.com/usertan123/k8s-e-commerce-app.git","main") } 
+                script{ 
+                    code_checkout("https://github.com/usertan123/k8s-e-commerce-app.git","main") 
+                } 
             }
         }
 
         stage("Trivy: Filesystem scan") {
-            steps { script { trivy_scan(scanType: "fs", path: ".") } }
+            steps { 
+                script { 
+                    trivy_scan(scanType: "fs", path: ".") 
+                    } 
+                }
         }
 
         stage("OWASP: Dependency check") {
-            steps { script { owasp_dependency() } }
+            steps { 
+                script { 
+                    owasp_dependency() 
+                } 
+            }
         }
 
         stage("SonarQube: Code Analysis") {
-            steps { script { sonarqube_analysis("Sonar","easyshop","easyshop") } }
+            steps { 
+                script { 
+                    sonarqube_analysis("Sonar","easyshop","easyshop") 
+                } 
+            }
         }
 
         stage("SonarQube: Code Quality Gates") {
-            steps { script { sonarqube_code_quality() } }
+            steps { 
+                script { 
+                    sonarqube_code_quality() 
+                }
+            }
         }
         
         stage('Build Docker Images') {
             parallel {
                 stage('Build Main App Image') {
-                    steps { script { docker_build(imageName: env.DOCKER_IMAGE_NAME,imageTag: env.DOCKER_IMAGE_TAG,dockerfile: 'Dockerfile',context: '.') } }
+                    steps {
+                        script { 
+                            docker_build(imageName: env.DOCKER_IMAGE_NAME,imageTag: env.DOCKER_IMAGE_TAG,dockerfile: 'Dockerfile',context: '.') 
+                        }
+                    }
                 }
                 stage('Build Migration Image') {
-                    steps { script { docker_build(imageName: env.DOCKER_MIGRATION_IMAGE_NAME,imageTag: env.DOCKER_IMAGE_TAG,dockerfile: 'scripts/Dockerfile.migration',context: '.') } }
+                    steps { 
+                        script { 
+                            docker_build(imageName: env.DOCKER_MIGRATION_IMAGE_NAME,imageTag: env.DOCKER_IMAGE_TAG,dockerfile: 'scripts/Dockerfile.migration',context: '.') 
+                        }
+                    }
                 }
             }
         }
@@ -55,25 +81,45 @@ pipeline {
         stage("Trivy: Docker Image Scan") {
             parallel {
                 stage("Scan Main App Image") {
-                    steps { script { trivy_scan(scanType: "image", imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) } }
+                    steps { 
+                        script { 
+                            trivy_scan(scanType: "image", imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
+                        } 
+                    }
                 }
                 stage("Scan Migration Image") {
-                    steps { script { trivy_scan(scanType: "image", imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) } }
+                    steps { 
+                        script { 
+                            trivy_scan(scanType: "image", imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
+                        } 
+                    }
                 }
             }
         }
 
         stage('Run Unit Tests') {
-            steps { script { run_tests(testCommand: "npm test") } }
+            steps { 
+                script { 
+                    run_tests(testCommand: "npm test") 
+                } 
+            }
         }
         
         stage('Push Docker Images') {
             parallel {
                 stage('Push Main App Image') {
-                    steps { script { docker_push(imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG, credentials: 'docker') } }
+                    steps { 
+                        script { 
+                            docker_push(imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG, credentials: 'docker') 
+                        } 
+                    }
                 }
                 stage('Push Migration Image') {
-                    steps { script { docker_push(imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG, credentials: 'docker') } }
+                    steps { 
+                        script { 
+                            docker_push(imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG, credentials: 'docker') 
+                        } 
+                    }
                 }
             }
         }
@@ -95,43 +141,67 @@ pipeline {
 
     post {
         success {
-            emailext (
-                subject: "✅ Jenkins Build #${env.BUILD_NUMBER} - SUCCESS",
-                body: """
-                    <h2 style="color:green;">Build Successful 🎉</h2>
-                    <p>Job: ${env.JOB_NAME}<br>
-                    Build Number: ${env.BUILD_NUMBER}<br>
-                    Status: <b>${currentBuild.currentResult}</b></p>
+            script {
+                emailext attachLog: true,
+                from: 'tan2018carlson@gmail.com',
+                subject: "✅ Easyshop Application has been updated and deployed #${env.BUILD_NUMBER} - '${currentBuild.result}'",
+                body: """ 
+                    <html>
+                    <body>
+                        <h2 style="color:green;">Build Successful 🎉</h2>
+                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
+                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
+                        </div><br>
+                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
+                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
+                        </div>
+                        Status: <b>${currentBuild.currentResult}</b></p>
 
-                    <h3>Attached Reports:</h3>
-                    <ul>
-                      <li>Trivy Scan Report</li>
-                      <li>OWASP Dependency Check Report</li>
-                    </ul>
-                """,
-                to: "tan2018carlson@gmail.com",
-                attachmentsPattern: "trivy-*.json, **/dependency-check-report.xml"
-            )
+                        <h3>Attached Reports:</h3>
+                        <ul>
+                        <li>Trivy Scan Report</li>
+                        <li>OWASP Dependency Check Report</li>
+                        </ul>
+                    </body>
+                    </html>
+                    """,
+                    to: "tan2018carlson@gmail.com",
+                    mimeType: 'text/html',
+                    attachmentsPattern: "trivy-*.json, **/dependency-check-report.xml"
+            }
         }
 
         failure {
-            emailext (
-                subject: "❌ Jenkins Build #${env.BUILD_NUMBER} - FAILED",
+            script {
+                emailext attachLog: true,
+                from: 'tan2018carlson@gmail.com',
+                subject: "❌ Easyshop Application build failed #${env.BUILD_NUMBER} - '${currentBuild.result}'",
                 body: """
-                    <h2 style="color:red;">Build Failed 🚨</h2>
-                    <p>Job: ${env.JOB_NAME}<br>
-                    Build Number: ${env.BUILD_NUMBER}<br>
-                    Status: <b>${currentBuild.currentResult}</b></p>
+                    <html>
+                    <body>
+                        <div style="background-color:rgb(46, 136, 221); padding: 10px; margin-bottom: 10px;">
+                            <p style="color: black; font-weight: bold;">Build Status: FAILURE 🚨 </p>
+                        </div>
+                        <div style="background-color: #FFA07A; padding: 10px; margin-bottom: 10px;">
+                            <p style="color: black; font-weight: bold;">Project: ${env.JOB_NAME}</p>
+                        </div>
+                        <div style="background-color: #90EE90; padding: 10px; margin-bottom: 10px;">
+                            <p style="color: black; font-weight: bold;">Build Number: ${env.BUILD_NUMBER}</p>
+                        </div>
+                        Status: <b>${currentBuild.currentResult}</b></p>
 
-                    <h3>Attached Reports:</h3>
-                    <ul>
-                      <li>Trivy Scan Report</li>
-                      <li>OWASP Dependency Check Report</li>
-                    </ul>
+                        <h3>Attached Reports:</h3>
+                        <ul>
+                        <li>Trivy Scan Report</li>
+                        <li>OWASP Dependency Check Report</li>
+                        </ul>
+                    </body>
+                    </html>
                 """,
                 to: "tan2018carlson@gmail.com",
+                mimeType: 'text/html',
                 attachmentsPattern: "trivy-*.json, **/dependency-check-report.xml"
-            )
+            }
         }
     }
 }
