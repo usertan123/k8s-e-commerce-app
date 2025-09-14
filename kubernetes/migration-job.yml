@@ -15,11 +15,11 @@ spec:
     spec:
       containers:
       - name: migration
-        image: tanmaytech/easyshop-migration:1
+        image: tanmaytech/easyshop-migration:19
         imagePullPolicy: IfNotPresent
         envFrom:
             - configMapRef:
                 name: easyshop-config
             - secretRef:
-                name: easyshop-secrets
+                name: easyshop-secret
       restartPolicy: OnFailure
