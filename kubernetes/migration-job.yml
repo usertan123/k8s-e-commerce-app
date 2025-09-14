@@ -31,5 +31,5 @@ spec:
         - configMapRef:
             name: easyshop-config
         - secretRef:
-            name: easyshop-secret
+            name: easyshop-secrets
       restartPolicy: OnFailure
