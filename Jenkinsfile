@@ -62,7 +62,9 @@ pipeline {
         stage('Run Unit Tests') {
             steps { 
                 script { 
-                    run_tests(testCommand: "npm test", nodeTool: "NodeJS 18.0.0") 
+                    // run_tests(testCommand: "npm test", nodeTool: "NodeJS 18.0.0")
+                    run_tests(testCommand: "npm test", nodeTool: "Node18") 
+ 
                 } 
             }
         }
