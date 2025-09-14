@@ -59,6 +59,14 @@ pipeline {
             }
         }
         
+        stage('Run Unit Tests') {
+            steps { 
+                script { 
+                    run_tests(testCommand: "npm test", nodeTool: "NodeJS 18.0.0") 
+                } 
+            }
+        }
+        
         stage('Build Docker Images') {
             parallel {
                 stage('Build Main App Image') {
@@ -78,32 +86,7 @@ pipeline {
             }
         }
 
-        stage("Trivy: Docker Image Scan") {
-            parallel {
-                stage("Scan Main App Image") {
-                    steps { 
-                        script { 
-                            trivy_scan(scanType: "image", imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
-                        } 
-                    }
-                }
-                stage("Scan Migration Image") {
-                    steps { 
-                        script { 
-                            trivy_scan(scanType: "image", imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
-                        } 
-                    }
-                }
-            }
-        }
 
-        stage('Run Unit Tests') {
-            steps { 
-                script { 
-                    run_tests(testCommand: "npm test", nodeTool: "NodeJS 18.0.0") 
-                } 
-            }
-        }
         
         stage('Push Docker Images') {
             parallel {
@@ -124,6 +107,25 @@ pipeline {
             }
         }
         
+        stage("Trivy: Docker Image Scan") {
+            parallel {
+                stage("Scan Main App Image") {
+                    steps { 
+                        script { 
+                            trivy_scan(scanType: "image", imageName: env.DOCKER_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
+                        } 
+                    }
+                }
+                stage("Scan Migration Image") {
+                    steps { 
+                        script { 
+                            trivy_scan(scanType: "image", imageName: env.DOCKER_MIGRATION_IMAGE_NAME, imageTag: env.DOCKER_IMAGE_TAG) 
+                        } 
+                    }
+                }
+            }
+        }
+
         stage('Update Kubernetes Manifests') {
             steps {
                 script {
